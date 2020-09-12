@@ -1,0 +1,364 @@
+<!doctype html>
+
+<head>
+    <title>网格热图</title>
+    <script src="./lib/Tween.min.js" type="text/javascript"></script>
+    <script src="./lib/threebox.js" type="text/javascript"></script>
+    <script src='./lib/mapbox-gl.js' type="text/javascript"></script>
+    <link href='./lib/mapbox-gl.css' rel='stylesheet' />
+    <script src="./lib/jquery.js" type="text/javascript"></script>
+    <script src="./lib/lodash.js" type="text/javascript"></script>
+    <style>
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+ 
+    </style>
+</head>
+
+<body>
+    <div id='map' class='map'></div>
+
+    <script>
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoibGltemdpc2VyIiwiYSI6ImNqZXFvemJlcjB1bWYyd2x0eGxjeGdvcXIifQ.gSsj63R-2VZV7L7mpSw0Uw';
+
+        let mapboxmap = new mapboxgl.Map({
+            container: 'map',
+            style: 'http://webres.cityfun.com.cn/szmap/szmap_dark/3857/map_dark.json',
+            center: [120.68271397300009, 31.297051986000042],
+            zoom: 12,
+            pitch: 60,
+            bearing: 80
+        });
+
+        let row = 201;
+        let column = 198;
+
+        mapboxmap.on('style.load', function () {
+            let tb;
+            mapboxmap.addLayer({
+                id: 'custom_layer',
+                type: 'custom',
+
+                onAdd: function (map, mbxContext) {
+                    let timeInCount = 60;
+                    let timeInterv = 3000;
+                    let scale = 0.2;
+                    let aniindexArr = new Array(8).fill({
+                        endPointIndex: 0
+                    })
+                    this.map = map;
+                    tb = new Threebox(
+                        map,
+                        mbxContext, {
+                        defaultLights: true
+                    }
+                    );
+                    let lineGroup = new THREE.Group();
+                    tb.add(lineGroup);
+                    jQuery.get(`./data/grid.txt`).then(res => {
+                        let alllines = arrSplit(tb, res);
+                        // 绘制行
+                        let tween = null;
+                        let lineMesh = null;
+                        alllines.forEach((line, index) => {
+                            lineMesh = drawLine(line);
+                            lineMesh.userdata = { index: index }
+                            lineGroup.add(lineMesh)
+
+
+                        });
+
+                        lineGroup.traverse(function (child) {
+                            let userdata = child.userdata;
+                            if (userdata) {
+                                let lineIndex = userdata.index;
+                                let tween1 = new TWEEN.Tween(aniindexArr[0])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[2] * scale;
+                                            let end = item[3] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[0].endPointIndex = 0;
+                                    })
+                                let tween2 = new TWEEN.Tween(aniindexArr[1])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[3] * scale;;
+                                            let end = item[4] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[1].endPointIndex = 0;
+                                    })
+                                let tween3 = new TWEEN.Tween(aniindexArr[2])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[4] * scale;;
+                                            let end = item[5] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[2].endPointIndex = 0;
+                                    })
+                                let tween4 = new TWEEN.Tween(aniindexArr[3])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[5] * scale;;
+                                            let end = item[6] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[3].endPointIndex = 0;
+                                    })
+                                let tween5 = new TWEEN.Tween(aniindexArr[4])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[6] * scale;
+                                            let end = item[7] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[4].endPointIndex = 0;
+                                    })
+                                let tween6 = new TWEEN.Tween(aniindexArr[5])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[7] * scale;
+                                            let end = item[8] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[5].endPointIndex = 0;
+                                    })
+                                let tween7 = new TWEEN.Tween(aniindexArr[6])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[8] * scale;
+                                            let end = item[9] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[6].endPointIndex = 0;
+                                    })
+                                    let tween9= new TWEEN.Tween(aniindexArr[6])
+                                    .to({ endPointIndex: timeInCount }, timeInterv)
+                                    .onUpdate(function (iii) {
+                                        let vertices = [];
+                                        let colors = [];
+                                        for (let i = 0; i < alllines[lineIndex].length; i++) {
+                                            let item = alllines[lineIndex][i];
+                                            let begain = item[9] * scale;
+                                            let end = item[0] * scale;
+                                            let h = begain + (end - begain) / timeInCount * iii.endPointIndex;
+                                            vertices.push(new THREE.Vector3(item[0], item[1], h))
+                                            colors.push(getColorByValue(h));
+                                        }
+                                        child.geometry.vertices = vertices;
+                                        child.geometry.colors = colors;
+                                        child.geometry.verticesNeedUpdate = true;
+                                        child.geometry.colorsNeedUpdate = true;
+                                    }).onComplete(function () {
+                                        aniindexArr[7].endPointIndex = 0;
+                                    })
+                                tween1.chain(tween2)
+                                tween2.chain(tween3)
+                                tween3.chain(tween4);
+                                tween4.chain(tween5)
+                                tween5.chain(tween6)
+                                tween6.chain(tween7)
+                                tween7.chain(tween1)
+                                tween1.start();
+                            }
+
+
+                        })
+
+
+                    });
+
+                },
+                render: function (gl, matrix) {
+
+                    if (this.map)
+                        this.map.triggerRepaint();
+                    if (tb)
+                        tb.update();
+                    TWEEN.update();
+                }
+            });
+        });
+        function arrSplit(tb, datStr) {
+            let resArr = dataFormat(tb, datStr);
+            let rows = _.chunk(resArr, row);
+            let colums = [];
+            let tmpColums = [];
+            for (let i = 0; i < row; i++) {
+                for (let j = 0; j < column; j++) {
+                    let item = resArr[row * j + i]
+                    tmpColums.push(item);
+                }
+            }
+            colums = _.chunk(tmpColums, column);
+            return [...rows, ...colums];
+        }
+        function drawLine(row) {
+            let vertices = [];
+            let colors = [];
+            let geometry = new THREE.Geometry();
+
+            row.forEach(coordinate => {
+                let [x, y, z] = [coordinate[0], coordinate[1], coordinate[2]];
+                vertices.push(new THREE.Vector3(x, y, z))
+                colors.push(getColorByValue(z))
+            });
+
+            let material = new THREE.LineBasicMaterial({
+                opacity: 1,
+                linewidth: 1,
+                vertexColors: THREE.VertexColors,
+                // blending: THREE.AdditiveBlending
+            });
+            geometry.vertices = vertices;
+            geometry.colors = colors;
+            let lineMesh = new THREE.Line(geometry, material);
+            lineMesh.geometry.verticesNeedUpdate = true;
+            lineMesh.geometry.colorsNeedUpdate = true;
+            return lineMesh;
+        }
+ 
+
+        function dataFormat(tb, dataStr) {
+            let points = [];
+            dataStr.split('\n').map(function (s, i) {
+                let splitArray = s.split(',');
+                var ll = [parseFloat(splitArray[0]), parseFloat(splitArray[1])];
+                let {
+                    x,
+                    y,
+                    z
+                } = tb.projectToWorld(ll)
+
+                points.push([...[x, y], ...splitArray.splice(2).map(i => Number(i))])
+            });
+            return points;
+        }
+
+        let colors = [
+        new THREE.Color(`rgb( 113, 196, 54)`),
+            new THREE.Color(`rgb( 113, 196, 54)`),
+            new THREE.Color(`rgb( 171, 190, 52)`),
+            new THREE.Color(`rgb( 201, 155, 52)`),
+            new THREE.Color(`rgb( 205, 122, 45)`),
+            new THREE.Color(`rgb( 214, 96, 53)`),
+            new THREE.Color(`rgb( 234, 57, 45)`),
+            new THREE.Color(`rgb( 234, 57, 45)`)
+      
+        ]
+        function getColorByValue(value) {
+            let tvalue = Number(value)
+            if (tvalue < 3) {
+                return colors[0];
+            } else if (tvalue < 5) {
+                return colors[1];
+            } else if (tvalue <= 8) {
+                return colors[2];
+            } else if (tvalue < 10) {
+                return colors[3];
+            } else if (tvalue < 15) {
+                return colors[4];
+            } else if (tvalue < 30) {
+                return colors[5];
+            } else if (tvalue < 50) {
+                return colors[6];
+            } else {
+                return colors[7];
+            }
+        }
+
+
+
+    </script>
+</body>

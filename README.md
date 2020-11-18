@@ -1,11 +1,9 @@
 ## 一、前言
-知乎地址 [https://zhuanlan.zhihu.com/p/235222599](https://zhuanlan.zhihu.com/p/235222599)
-
 最近工作上需要实现一个地图动画效果，简单的动画效果，是的，简单；不过在此之前，我并不认为它简单，需要有一点点的webgl、three.js的基础。
 
 效果大概就是一个网格起伏热力图的动画，像心跳一样、heartbeat……，像这样。
 
-![](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9bfa036a0805482eaeb39cd1004a6427~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/0.png)
 
 上面这个动效，它好像是基于一个gltf模型来做的，它不给地图交互，现在我们也想实现类似的效果，我们最后实现的效果跟这个效果比还有点差距，我们慢慢靠近它，然后再做的更好。
 
@@ -14,7 +12,7 @@
 ## 二、数据准备
 通过空间插值、生成渔网、统计网格违停数量，网格转出矩阵点，重复处理八个月的数据。熟悉ArcMap或QGIS的同学，这些数据处理过程应该比较熟悉的，如何服务化处理这个过程是需要考虑的。或者你采用一些图像处理的方式，来处理这些数据。这里不介绍数据处理过程。列出数据处理后的结果数据。
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/06f0daeee9ed4075b7a34e06bb7cb74c~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/1.png)
 
 -9999 是空值
 
@@ -26,7 +24,7 @@
 ```
 为了方便后面绘图，将八个月的数据合并为一个文件，每条记录表示一个网格点，分别为：经度坐标、维度坐标、一到八月违停数量。
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0a767bd20ae0466cb5120da02771f3b4~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/2.png)
 
 ```javascript
 经度,维度,1月,2月,3月,4月,5月,6月,7月,8月,
@@ -139,7 +137,7 @@ function getColorByValue(value) {
 ### 4、绘制结果
 结果是这样的，看起来，是我们预期的结果。
 
-![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d19c773cde4d4bdcb9beaf30680902c4~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/3.png)
 
 ## 四、网格动画
 动画就是“补间”，弥补中间值。某一个网格点从一月的违停数量 1 增加到 10 ，我们希望它这个过程用时两秒，就需要中间插值。插多少呢？如果，我们希望一秒达到55幁，当然一秒能不能达到55，这是由浏览器决定的，假如我们机器跟得上。想要网格点用时两秒从1平缓的变到10，我需要在中间插值110个点左右。
@@ -172,7 +170,7 @@ alllines.forEach((line, index) => {
 ### 2、计算中间值
 遍历所有线，修改每一条线顶点的高度和颜色。直接使用违法停车量来作为顶点高度，这个值太大，我们乘上一个缩放系数scale。动画插值的过程，中间值（高度）:
 
-![](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/76ea80b5139044c2980e2a7d460b3707~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/4.png)
 
 - begain :起始值，案例中表示当前网格点一月份的违停量
 - end ：终点值，案例中表示当前网格点二月份的违停量
@@ -202,7 +200,7 @@ let tween1 = new TWEEN.Tween(aniindexArr[0])
 ```
 ###  3、连续2月动画
 tween.js支持动画链接，可以将多个动画链接起来，tween1.chain(tween2);我们把一月份和二月份动画链接起来，1->2->1，结果像这样，看起来像那么回事儿了。
-![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c488ca12c76041cdb80b486c76f1c10f~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/5.gif)
 
 ```javascript
 lineGroup.traverse(function (child) {
@@ -259,7 +257,7 @@ lineGroup.traverse(function (child) {
 ```
 ### 4、连续8月动画
 同理：我们把八个月的数据链接起来，效果像这样。
-  ![](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/517657b0c9924e6c8e8c1f6d511b3746~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/6.gif)
 
 ## 五、颜色混合
 如何去除值为零的点，如果从数据层面来讨论这个问题，稍有繁琐，就是我们在绘制线的时候直接跳过值为零的点。这里使用颜色混合的方式来去除值为零的点。
@@ -290,7 +288,7 @@ let material = new THREE.LineBasicMaterial({
 });
 ```
 最后的结果是像这样。
- ![](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f13263e36fe84d34827c467c313cb2d2~tplv-k3u1fbpfcp-zoom-1.image)
+![](./imgs/7.gif)
 
 ## 六、总结
 工作中编写的案例，分享一下，如何你也有要实现类似的效果，希望对你有所帮助。首先，对数据要求是规则的网格，你可以使用arcmap,qgis类似的软件，来处理数据，也可以是自己编写的数据处理工具；地图使用mapboxg；动画实现方面，使用了three.js + tween.js。需要对webgl和three.js有了解，就可以实现类似的动画效果。
